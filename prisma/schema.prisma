@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole { ADMIN SALES }
+enum LeadStatus { NEW CONTACTED OPPORTUNITY REJECTED }
+enum OpportunityStage { NEW CONTACTED QUOTE NEGOTIATION WON }
+enum InvoiceStatus { DRAFT SENT PARTIAL PAID OVERDUE }
+enum PaymentMethod { CASH TRANSFER CHECK CCP }
+
+model Company {
+  id        String @id @default(cuid())
+  name      String
+  address   String?
+  nif       String?
+  nis       String?
+  phone     String?
+  email     String?
+  users     User[]
+  leads     Lead[]
+  products  Product[]
+  invoices  Invoice[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id            String @id @default(cuid())
+  email         String @unique
+  password      String?
+  name          String
+  role          UserRole @default(SALES)
+  companyId     String
+  company       Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  assignedLeads Lead[] @relation("AssignedLeads")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Lead {
+  id         String @id @default(cuid())
+  companyId  String
+  company    Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name       String
+  phone      String?
+  email      String?
+  customerCompany String?
+  source     String?
+  status     LeadStatus @default(NEW)
+  assignedTo String?
+  assignee   User? @relation("AssignedLeads", fields: [assignedTo], references: [id], onDelete: SetNull)
+  notes      String?
+  opportunity Opportunity?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  @@index([companyId, status])
+}
+
+model Opportunity {
+  id            String @id @default(cuid())
+  leadId        String @unique
+  lead          Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  amount        Decimal @db.Decimal(12, 2) @default(0)
+  stage         OpportunityStage @default(NEW)
+  probability   Int @default(10)
+  expectedClose DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Product {
+  id        String @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  sku       String?
+  price     Decimal @db.Decimal(12, 2)
+  tvaRate   Decimal @db.Decimal(5, 2) @default(19)
+  stock     Int @default(0)
+  items     InvoiceItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([companyId])
+}
+
+model Invoice {
+  id        String @id @default(cuid())
+  number    String @unique
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  clientId  String?
+  clientName String
+  issuedAt  DateTime @default(now())
+  dueAt     DateTime?
+  subtotal  Decimal @db.Decimal(12, 2)
+  tva       Decimal @db.Decimal(12, 2)
+  total     Decimal @db.Decimal(12, 2)
+  status    InvoiceStatus @default(DRAFT)
+  items     InvoiceItem[]
+  payments  Payment[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@index([companyId, status])
+}
+
+model InvoiceItem {
+  id        String @id @default(cuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  description String
+  quantity  Decimal @db.Decimal(12, 2)
+  price     Decimal @db.Decimal(12, 2)
+  tva       Decimal @db.Decimal(5, 2) @default(19)
+}
+
+model Payment {
+  id        String @id @default(cuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount    Decimal @db.Decimal(12, 2)
+  method    PaymentMethod
+  paidAt    DateTime @default(now())
+  reference String?
+}

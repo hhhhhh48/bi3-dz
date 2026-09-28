@@ -1,0 +1,5 @@
+import Link from "next/link";
+import { LayoutDashboard, Users, Receipt, BarChart3, Package, Settings } from "lucide-react";
+
+const links = [["لوحة التحكم", "/", LayoutDashboard], ["العملاء المحتملون", "/leads", Users], ["الفواتير", "/invoices", Receipt], ["المنتجات", "/products", Package], ["التقارير", "/reports", BarChart3], ["الإعدادات", "/settings", Settings]] as const;
+export function Sidebar() { return <aside className="hidden w-64 shrink-0 border-l bg-[#0f172a] p-5 text-white md:block"><div className="mb-10 text-2xl font-bold"><span className="text-[#c9a961]">bi3</span>.dz</div><nav className="space-y-2">{links.map(([label, href, Icon]) => <Link key={href} href={href} className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-300 transition hover:bg-white/10 hover:text-white"><Icon size={19}/>{label}</Link>)}</nav><div className="mt-12 rounded-xl bg-white/10 p-4 text-sm text-slate-300">منطقة العمل<br/><strong className="text-white">شركتي الجزائرية</strong></div></aside>; }

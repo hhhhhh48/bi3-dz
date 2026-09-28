@@ -1,0 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root { --navy:#0f172a; --gold:#c9a961; }
+* { box-sizing:border-box; }
+body { margin:0; background:#f8fafc; color:#0f172a; font-family:var(--font-cairo),var(--font-inter),sans-serif; }
+button,input,select,textarea { font:inherit; }
